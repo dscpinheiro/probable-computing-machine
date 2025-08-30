@@ -1,5 +1,7 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
-builder.AddProject<Projects.TodoApp_Backend>("backend");
+var db = builder.AddSqlite("db").WithSqliteWeb();
+builder.AddProject<Projects.TodoApp_Backend>("backend")
+    .WithReference(db);
 
 builder.Build().Run();

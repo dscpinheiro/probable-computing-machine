@@ -1,15 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using TodoApp.Backend.Middleware;
+
 var builder = WebApplication.CreateBuilder(args);
+builder.AddSqliteDbContext<TodoDbContext>("db");
 
 builder.AddServiceDefaults();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-
-var connectionString =
-    builder.Configuration.GetConnectionString("TodoDbContext") ??
-    throw new InvalidOperationException("Connection string 'TodoDbContext' not found.");
-builder.Services.AddDbContext<TodoDbContext>(options => options.UseSqlite(connectionString));
 
 var app = builder.Build();
 if (app.Environment.IsDevelopment())
@@ -24,4 +21,9 @@ else
 
 app.MapDefaultEndpoints();
 app.MapTodoEndpoints();
+
+using var scope = app.Services.CreateScope();
+var dbContext = scope.ServiceProvider.GetRequiredService<TodoDbContext>();
+await dbContext.Database.MigrateAsync();
+
 app.Run();
