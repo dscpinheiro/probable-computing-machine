@@ -5,7 +5,7 @@ public class TodoDTO
     public Guid Id { get; set; }
     public string? Title { get; set; }
     public bool IsCompleted { get; set; }
-    public DateOnly DueDate { get; set; }
+    public DateOnly? DueDate { get; set; }
 
     public TodoDTO() { }
 

@@ -8,5 +8,5 @@ public class Todo
 
     public bool IsCompleted { get; set; } = false;
 
-    public DateOnly DueDate { get; set; }
+    public DateOnly? DueDate { get; set; } = null;
 }

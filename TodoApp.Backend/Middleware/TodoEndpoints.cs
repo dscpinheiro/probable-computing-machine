@@ -39,7 +39,12 @@ public static class TodoEndpoints
                 todos = todos.Take(search.PageSize.Value);
             }
 
-            return await todos.Select(t => new TodoDTO(t)).ToListAsync();
+            // Search parameters could be expended so that which property to sort could be specified too.
+            return await todos
+                .OrderBy(t => t.DueDate)
+                .ThenBy(t => t.Title)
+                .Select(t => new TodoDTO(t))
+                .ToListAsync();
         })
         .WithName("GetTodos")
         .WithOpenApi();
