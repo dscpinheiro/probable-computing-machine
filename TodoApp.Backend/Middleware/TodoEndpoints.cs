@@ -12,7 +12,7 @@ public static class TodoEndpoints
 
         group.MapGet("/", async ([AsParameters] TodoSearch search, TodoDbContext db) =>
         {
-            var todos = db.Todo.AsQueryable().AsNoTracking();
+            var todos = db.Todos.AsQueryable().AsNoTracking();
 
             if (search.IsCompleted.HasValue)
             {
@@ -46,7 +46,7 @@ public static class TodoEndpoints
 
         group.MapGet("/{id}", async Task<Results<Ok<TodoDTO>, NotFound>> (Guid id, TodoDbContext db) =>
         {
-            return await db.Todo.AsNoTracking()
+            return await db.Todos.AsNoTracking()
                 .FirstOrDefaultAsync(model => model.Id == id)
                 is Todo model
                     ? TypedResults.Ok(new TodoDTO(model))
@@ -63,7 +63,7 @@ public static class TodoEndpoints
                 return TypedResults.BadRequest();
             }
 
-            var affected = await db.Todo
+            var affected = await db.Todos
                 .Where(model => model.Id == id)
                 .ExecuteUpdateAsync(setters => setters
                     .SetProperty(m => m.Title, todo.Title)
@@ -90,7 +90,7 @@ public static class TodoEndpoints
                 DueDate = todo.DueDate,
             };
 
-            db.Todo.Add(entity);
+            db.Todos.Add(entity);
             await db.SaveChangesAsync();
             return TypedResults.Created($"/todos/{entity.Id}", new TodoDTO(entity));
         })
@@ -99,7 +99,7 @@ public static class TodoEndpoints
 
         group.MapDelete("/{id}", async Task<Results<Ok, NotFound>> (Guid id, TodoDbContext db) =>
         {
-            var affected = await db.Todo
+            var affected = await db.Todos
                 .Where(model => model.Id == id)
                 .ExecuteDeleteAsync();
 
