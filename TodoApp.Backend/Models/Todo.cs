@@ -1,13 +1,12 @@
-namespace TodoApp.Backend.Models
+namespace TodoApp.Backend.Models;
+
+public class Todo
 {
-    public class Todo
-    {
-        public Guid Id { get; set; }
+    public Guid Id { get; set; }
 
-        public required string Title { get; set; }
+    public required string Title { get; set; }
 
-        public bool IsCompleted { get; set; } = false;
+    public bool IsCompleted { get; set; } = false;
 
-        public DateOnly DueDate { get; set; }
-    }
+    public DateOnly DueDate { get; set; }
 }

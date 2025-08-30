@@ -8,28 +8,61 @@ public static class TodoEndpoints
 {
     public static void MapTodoEndpoints(this IEndpointRouteBuilder routes)
     {
-        var group = routes.MapGroup("/api/Todo").WithTags(nameof(Todo));
+        var group = routes.MapGroup("/todos");
 
-        group.MapGet("/", async (TodoDbContext db) =>
+        group.MapGet("/", async ([AsParameters] TodoSearch search, TodoDbContext db) =>
         {
-            return await db.Todo.ToListAsync();
+            var todos = db.Todo.AsQueryable().AsNoTracking();
+
+            if (search.IsCompleted.HasValue)
+            {
+                todos = todos.Where(t => t.IsCompleted == search.IsCompleted.Value);
+            }
+
+            if (!string.IsNullOrWhiteSpace(search.Query))
+            {
+                todos = todos.Where(t => t.Title.Contains(search.Query));
+            }
+
+            if (search.StartDate.HasValue)
+            {
+                todos = todos.Where(t => t.DueDate >= search.StartDate.Value);
+            }
+
+            if (search.EndDate.HasValue)
+            {
+                todos = todos.Where(t => t.DueDate <= search.EndDate.Value);
+            }
+
+            if (search.PageSize.HasValue)
+            {
+                todos = todos.Take(search.PageSize.Value);
+            }
+
+            return await todos.Select(t => new TodoDTO(t)).ToListAsync();
         })
-        .WithName("GetAllTodos")
+        .WithName("GetTodos")
         .WithOpenApi();
 
-        group.MapGet("/{id}", async Task<Results<Ok<Todo>, NotFound>> (Guid id, TodoDbContext db) =>
+        group.MapGet("/{id}", async Task<Results<Ok<TodoDTO>, NotFound>> (Guid id, TodoDbContext db) =>
         {
             return await db.Todo.AsNoTracking()
                 .FirstOrDefaultAsync(model => model.Id == id)
                 is Todo model
-                    ? TypedResults.Ok(model)
+                    ? TypedResults.Ok(new TodoDTO(model))
                     : TypedResults.NotFound();
         })
         .WithName("GetTodoById")
         .WithOpenApi();
 
-        group.MapPut("/{id}", async Task<Results<Ok, NotFound>> (Guid id, Todo todo, TodoDbContext db) =>
+        group.MapPut("/{id}", async Task<Results<Ok, NotFound, BadRequest>> (Guid id, TodoDTO todo, TodoDbContext db) =>
         {
+            // .NET 10 supports model validation for minimal APIs, but for now manually check the request.
+            if (string.IsNullOrWhiteSpace(todo.Title))
+            {
+                return TypedResults.BadRequest();
+            }
+
             var affected = await db.Todo
                 .Where(model => model.Id == id)
                 .ExecuteUpdateAsync(setters => setters
@@ -43,11 +76,23 @@ public static class TodoEndpoints
         .WithName("UpdateTodo")
         .WithOpenApi();
 
-        group.MapPost("/", async (Todo todo, TodoDbContext db) =>
+        group.MapPost("/", async Task<Results<Created<TodoDTO>, BadRequest>> (TodoDTO todo, TodoDbContext db) =>
         {
-            db.Todo.Add(todo);
+            if (string.IsNullOrWhiteSpace(todo.Title))
+            {
+                return TypedResults.BadRequest();
+            }
+
+            var entity = new Todo
+            {
+                Title = todo.Title,
+                IsCompleted = todo.IsCompleted,
+                DueDate = todo.DueDate,
+            };
+
+            db.Todo.Add(entity);
             await db.SaveChangesAsync();
-            return TypedResults.Created($"/api/Todo/{todo.Id}", todo);
+            return TypedResults.Created($"/todos/{entity.Id}", new TodoDTO(entity));
         })
         .WithName("CreateTodo")
         .WithOpenApi();

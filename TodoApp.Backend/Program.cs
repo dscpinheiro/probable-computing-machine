@@ -13,6 +13,10 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+
+    using var scope = app.Services.CreateScope();
+    var dbContext = scope.ServiceProvider.GetRequiredService<TodoDbContext>();
+    await dbContext.Database.MigrateAsync();
 }
 else
 {
@@ -21,9 +25,5 @@ else
 
 app.MapDefaultEndpoints();
 app.MapTodoEndpoints();
-
-using var scope = app.Services.CreateScope();
-var dbContext = scope.ServiceProvider.GetRequiredService<TodoDbContext>();
-await dbContext.Database.MigrateAsync();
 
 app.Run();
