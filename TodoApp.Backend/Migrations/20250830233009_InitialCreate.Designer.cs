@@ -11,8 +11,8 @@ using TodoApp.Backend;
 namespace TodoApp.Backend.Migrations
 {
     [DbContext(typeof(TodoDbContext))]
-    [Migration("20250830223935_UpdateDateRequired")]
-    partial class UpdateDateRequired
+    [Migration("20250830233009_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
