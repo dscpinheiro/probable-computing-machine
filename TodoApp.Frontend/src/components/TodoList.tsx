@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import type { Todo } from '../types';
+import type { Todo, TodoFilters } from '../types';
 import { TodoItem } from './TodoItem';
 import { TodoForm } from './TodoForm';
+import { TodoSearch } from './TodoSearch';
 import {
   Container,
   Typography,
@@ -18,11 +19,22 @@ export function TodoList() {
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
+  const [searchFilters, setSearchFilters] = useState<TodoFilters>({});
 
-  const fetchTodos = async () => {
+  const fetchTodos = async (search: TodoFilters = {}) => {
     try {
       setLoading(true);
-      const response = await fetch('/todos');
+
+      const queryParams = new URLSearchParams();
+      if (search.isCompleted) queryParams.append('IsCompleted', String(search.isCompleted));
+      if (search.query) queryParams.append('Query', search.query);
+      if (search.startDate) queryParams.append('StartDate', search.startDate);
+      if (search.endDate) queryParams.append('EndDate', search.endDate);
+      if (search.pageSize) queryParams.append('PageSize', String(search.pageSize));
+
+      const url = `/todos${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+      const response = await fetch(url);
+
       if (!response.ok) {
         throw new Error('Failed to fetch items');
       }
@@ -56,10 +68,10 @@ export function TodoList() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update todo');
+        throw new Error('Failed to update item');
       }
 
-      await fetchTodos();
+      await fetchTodos(searchFilters);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update item');
     }
@@ -81,7 +93,7 @@ export function TodoList() {
         setEditingTodo(null);
       }
 
-      await fetchTodos();
+      await fetchTodos(searchFilters);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete item');
     }
@@ -121,7 +133,7 @@ export function TodoList() {
         }
       }
 
-      await fetchTodos();
+      await fetchTodos(searchFilters);
       setShowForm(false);
       setEditingTodo(null);
     } catch (err) {
@@ -132,6 +144,11 @@ export function TodoList() {
   const handleCancel = () => {
     setShowForm(false);
     setEditingTodo(null);
+  };
+
+  const handleSearch = (search: TodoFilters) => {
+    setSearchFilters(search);
+    fetchTodos(search);
   };
 
   useEffect(() => {
@@ -174,6 +191,8 @@ export function TodoList() {
       {showForm && (
         <TodoForm todo={editingTodo || undefined} onSave={handleSave} onCancel={handleCancel} />
       )}
+
+      <TodoSearch onSearch={handleSearch} initialValues={searchFilters} />
 
       {todos.length === 0 ? (
         <Box textAlign="center" py={4}>
