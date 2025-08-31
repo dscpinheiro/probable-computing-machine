@@ -2,7 +2,15 @@ import { useState, useEffect } from 'react';
 import type { Todo } from '../types';
 import { TodoItem } from './TodoItem';
 import { TodoForm } from './TodoForm';
-import './TodoList.css';
+import {
+  Container,
+  Typography,
+  Button,
+  Box,
+  CircularProgress,
+  Alert
+} from '@mui/material';
+import { Add as AddIcon } from '@mui/icons-material';
 
 export function TodoList() {
   const [todos, setTodos] = useState<Todo[]>([]);
@@ -67,6 +75,12 @@ export function TodoList() {
         throw new Error('Failed to delete item');
       }
 
+      // If the deleted item is currently being edited, close the form
+      if (editingTodo?.id === id) {
+        setShowForm(false);
+        setEditingTodo(null);
+      }
+
       await fetchTodos();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete item');
@@ -125,34 +139,50 @@ export function TodoList() {
   }, []);
 
   if (loading) {
-    return <div className="todo-list-loading">Loading...</div>;
+    return (
+      <Container maxWidth="md" sx={{ py: 4, display: 'flex', justifyContent: 'center' }}>
+        <CircularProgress />
+      </Container>
+    );
   }
 
   if (error) {
     return (
-      <div className="todo-list-error">
-        <p>Error: {error}</p>
-      </div>
+      <Container maxWidth="md" sx={{ py: 4 }}>
+        <Alert severity="error">{error}</Alert>
+      </Container>
     );
   }
 
   return (
-    <div className="todo-list">
-      <div className="todo-list-header">
-        <h2>Todo List ({todos.length})</h2>
+    <Container maxWidth="md" sx={{ py: 4 }}>
+      <Box display="flex" alignItems="center" justifyContent="space-between" mb={3}>
+        <Typography variant="h4" component="h1">
+          To-do List ({todos.length})
+        </Typography>
         {!showForm && (
-          <button onClick={() => setShowForm(true)} className="add-todo-btn">Add new item</button>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => setShowForm(true)}
+          >
+            Add task
+          </Button>
         )}
-      </div>
+      </Box>
 
       {showForm && (
         <TodoForm todo={editingTodo || undefined} onSave={handleSave} onCancel={handleCancel} />
       )}
 
       {todos.length === 0 ? (
-        <p className="empty-message">Nothing to do yet!</p>
+        <Box textAlign="center" py={4}>
+          <Typography variant="body1" color="text.secondary">
+            Nothing to do yet!
+          </Typography>
+        </Box>
       ) : (
-        <div className="todo-items">
+        <Box>
           {todos.map(todo => (
             <TodoItem
               key={todo.id}
@@ -162,8 +192,8 @@ export function TodoList() {
               onEdit={handleEdit}
             />
           ))}
-        </div>
+        </Box>
       )}
-    </div>
+    </Container>
   );
 }

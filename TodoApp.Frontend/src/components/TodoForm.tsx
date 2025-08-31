@@ -1,6 +1,15 @@
 import { useState, useEffect } from 'react';
 import type { Todo } from '../types';
-import './TodoForm.css';
+import {
+  Card,
+  CardContent,
+  TextField,
+  FormControlLabel,
+  Checkbox,
+  Button,
+  Typography,
+  Box
+} from '@mui/material';
 
 interface TodoFormProps {
   todo?: Todo;
@@ -40,47 +49,55 @@ export function TodoForm({ todo, onSave, onCancel }: TodoFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="todo-form">
-      <h3>{todo ? 'Edit Todo' : 'Add New Todo'}</h3>
+    <Card sx={{ mb: 3 }}>
+      <CardContent>
+        <Typography variant="h6" gutterBottom>
+          {todo ? 'Edit task' : 'Add new task'}
+        </Typography>
 
-      <div className="form-group">
-        <label htmlFor="title">Title *</label>
-        <input
-          type="text"
-          id="title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="What needs to be done?"
-          autoFocus
-          required
-        />
-      </div>
-
-      <div className="form-group">
-        <label htmlFor="dueDate">Due Date</label>
-        <input
-          type="date"
-          id="dueDate"
-          value={dueDate}
-          onChange={(e) => setDueDate(e.target.value)}
-        />
-      </div>
-
-      <div className="form-group checkbox-group">
-        <label>
-          <input
-            type="checkbox"
-            checked={isCompleted}
-            onChange={(e) => setIsCompleted(e.target.checked)}
+        <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <TextField
+            label="Title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="What needs to be done?"
+            required
+            autoFocus
+            fullWidth
+            variant="outlined"
           />
-          Mark as completed
-        </label>
-      </div>
 
-      <div className="form-actions">
-        <button type="submit" className="save-btn">{todo ? 'Update' : 'Add'} Todo</button>
-        <button type="button" onClick={onCancel} className="cancel-btn">Cancel</button>
-      </div>
-    </form>
+          <TextField
+            label="Due Date"
+            type="date"
+            value={dueDate}
+            onChange={(e) => setDueDate(e.target.value)}
+            fullWidth
+            variant="outlined"
+            slotProps={{ inputLabel: { shrink: true } }}
+          />
+
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={isCompleted}
+                onChange={(e) => setIsCompleted(e.target.checked)}
+                color="primary"
+              />
+            }
+            label="Mark as completed"
+          />
+
+          <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
+            <Button type="button" onClick={onCancel} variant="outlined">
+              Cancel
+            </Button>
+            <Button type="submit" variant="contained" color="primary">
+              {todo ? 'Update' : 'Add'} task
+            </Button>
+          </Box>
+        </Box>
+      </CardContent>
+    </Card>
   );
 }
