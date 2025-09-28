@@ -10,6 +10,12 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+app.UseStatusCodePages(async handler =>
+    await Results
+        .Problem(statusCode: handler.HttpContext.Response.StatusCode)
+        .ExecuteAsync(handler.HttpContext)
+);
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -21,7 +27,7 @@ if (app.Environment.IsDevelopment())
 }
 else
 {
-    app.UseExceptionHandler("/Error", createScopeForErrors: true);
+    app.UseExceptionHandler(e => e.Run(async context => await Results.Problem().ExecuteAsync(context)));
 }
 
 app.MapDefaultEndpoints();
